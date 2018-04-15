@@ -45,6 +45,7 @@ Configuration locations:
 ---
 
 Nginx: /etc/nginx/nginx.conf
+
 PHP: /opt/php/VERSION/etc
 
 TODO: explain other uses and add more configuration locations^
