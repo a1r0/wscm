@@ -76,33 +76,6 @@ function setupCentos {
   yum groupinstall -y 'Development Tools'
   yum install libcurl-devel libxslt-devel glibc-utils.x86_64 libxslt libtool-ltdl-devel aspell-devel freetype-devel libpng-devel libjpeg-devel openssl-devel bzip2-devel libxml2-devel -y
   compilePHP
-  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/127.0.0.1\:9000/'\/run\/php7\.2\-fpm\.sock'/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-72\.pid'/g /opt/php/7.2/etc/php-fpm.conf
-  systemctl start php-7.2-fpm.service
-  systemctl enable php-7.2-fpm.service
-  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/127.0.0.1\:9000/'\/run\/php7\.1\-fpm\.sock'/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-71\.pid'/g /opt/php/7.1/etc/php-fpm.conf
-  systemctl start php-7.1-fpm.service
-  systemctl enable php-7.1-fpm.service
-  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/127.0.0.1\:9000/'\/run\/php7\.0\-fpm\.sock'/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-70\.pid'/g /opt/php/7.0/etc/php-fpm.conf
-  systemctl start php-7.0-fpm.service
-  systemctl enable php-7.0-fpm.service
   echo "Confiugring Nginx..."
   mkdir /etc/nginx/common
   echo "
@@ -155,39 +128,15 @@ EOF
 }
 
 function setupUbuntu {
+  echo "Adding user nginx"
+  adduser --system --no-create-home --shell /bin/false --group --disabled-login nginx
   echo "Running apt-get update"
   apt-get update -y > /dev/null
   echo "Installing Packages... This may take a few minutes depending on your system."
   apt-get install libcurl4-openssl-dev pkg-config libssl-dev libxml2-dev libbz2-dev libjpeg-turbo8-dev libpng-dev libfreetype6-dev libxslt-dev build-essential autoconf libzip-dev bison -y
   apt-get install nginx -y > /dev/null
+  sed -i s/user\ www\-data\;/user\ nginx\;/g /etc/nginx/nginx.conf
   compilePHP
-  sed -i s/group\ \=\ nobody/group\ \=\ www\-data/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/user\ \=\ nobody/user\ \=\ www\-data/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ www\-data/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ www\-data/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/127.0.0.1\:9000/'\/run\/php7\.2\-fpm\.sock'/g /opt/php/7.2/etc/php-fpm.d/www.conf
-  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-72\.pid'/g /opt/php/7.2/etc/php-fpm.conf
-  systemctl start php-7.2-fpm.service
-  systemctl enable php-7.2-fpm.service
-  sed -i s/group\ \=\ nobody/group\ \=\ www\-data/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/user\ \=\ nobody/user\ \=\ www\-data/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ www\-data/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ www\-data/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/127.0.0.1\:9000/'\/run\/php7\.1\-fpm\.sock'/g /opt/php/7.1/etc/php-fpm.d/www.conf
-  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-71\.pid'/g /opt/php/7.1/etc/php-fpm.conf
-  systemctl start php-7.1-fpm.service
-  systemctl enable php-7.1-fpm.service
-  sed -i s/group\ \=\ nobody/group\ \=\ www\-data/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/user\ \=\ nobody/user\ \=\ www\-data/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ www\-data/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ www\-data/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/127.0.0.1\:9000/'\/run\/php7\.0\-fpm\.sock'/g /opt/php/7.0/etc/php-fpm.d/www.conf
-  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-70\.pid'/g /opt/php/7.0/etc/php-fpm.conf
-  systemctl start php-7.0-fpm.service
-  systemctl enable php-7.0-fpm.service
   echo "Confiugring Nginx..."
   mkdir /etc/nginx/common
   echo "
@@ -271,6 +220,15 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.2-fpm.service
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.2\-fpm\.sock'/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-72\.pid'/g /opt/php/7.2/etc/php-fpm.conf
+  systemctl start php-7.2-fpm.service
+  systemctl enable php-7.2-fpm.service
   cd /opt/php/sources/7.1
   ./buildconf --force
   ./configure --prefix=/opt/php/7.1 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm
@@ -291,6 +249,15 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.1-fpm.service
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.1\-fpm\.sock'/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-71\.pid'/g /opt/php/7.1/etc/php-fpm.conf
+  systemctl start php-7.1-fpm.service
+  systemctl enable php-7.1-fpm.service
   cd /opt/php/sources/7.0
   ./buildconf --force
   ./configure --prefix=/opt/php/7.0 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm
@@ -311,6 +278,15 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.0-fpm.service
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.0\-fpm\.sock'/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-70\.pid'/g /opt/php/7.0/etc/php-fpm.conf
+  systemctl start php-7.0-fpm.service
+  systemctl enable php-7.0-fpm.service
 }
 
 function createsite {
