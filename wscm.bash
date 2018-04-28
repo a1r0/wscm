@@ -14,8 +14,8 @@ function usage {
 -d     |  --delete domain.com             Delete a site and the associated database
 -b     |  --backup domain.com             Backup a site + MySQL database to /opt/backup
 -php72 |  --php72  domain.com             Change site to PHP 7.2
--php72 |  --php72  domain.com             Change site to PHP 7.1
--php72 |  --php72  domain.com             Change site to PHP 7.0
+-php71 |  --php71  domain.com             Change site to PHP 7.1
+-php70 |  --php70  domain.com             Change site to PHP 7.0
 "
   exit
 }
