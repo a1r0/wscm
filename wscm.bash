@@ -133,7 +133,7 @@ function setupUbuntu {
   echo "Running apt-get update"
   apt-get update -y > /dev/null
   echo "Installing Packages... This may take a few minutes depending on your system."
-  apt-get install libcurl4-openssl-dev pkg-config libssl-dev libxml2-dev libbz2-dev libjpeg-turbo8-dev libpng-dev libfreetype6-dev libxslt-dev build-essential autoconf libzip-dev bison -y
+  apt-get install libcurl4-openssl-dev pkg-config libssl-dev libxml2-dev libbz2-dev libjpeg-turbo8-dev libpng-dev libfreetype6-dev libxslt-dev build-essential autoconf libzip-dev bison zip -y
   apt-get install nginx -y > /dev/null
   sed -i s/user\ www\-data\;/user\ nginx\;/g /etc/nginx/nginx.conf
   compilePHP
