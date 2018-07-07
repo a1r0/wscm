@@ -13,6 +13,7 @@ function usage {
 -cw    |  --create-wordpress domain.com   Create a WordPress site
 -d     |  --delete domain.com             Delete a site and the associated database
 -b     |  --backup domain.com             Backup a site + MySQL database to /opt/backup
+-php73 |  --php73  domain.com             Change site to PHP 7.3 (alpha!)
 -php72 |  --php72  domain.com             Change site to PHP 7.2
 -php71 |  --php71  domain.com             Change site to PHP 7.1
 -php70 |  --php70  domain.com             Change site to PHP 7.0
@@ -57,7 +58,7 @@ function setup {
     echo "OS detected as CentOS."
 	setupCentos
   fi
-  ln -s /opt/php/7.2/bin/php /usr/bin/php 
+  ln -s /opt/php/7.2/bin/php /usr/bin/php
   wget -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp
   echo "Please register with Lets Encrypt for SSL..."
   certbot register
@@ -90,6 +91,12 @@ function setupCentos {
                 fastcgi_pass unix:/run/php7.2-fpm.sock;
         }
   " >> /etc/nginx/common/php7.2.conf
+  echo "
+          location ~ \.php$ {
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php7.3-fpm.sock;
+        }
+  " >> /etc/nginx/common/php7.3.conf
   echo "
           location ~ \.php$ {
                 include fastcgi.conf;
@@ -189,17 +196,61 @@ EOF
 
 function compilePHP {
   echo "Downloading PHP sources, this may take a few minutes depending on your network connection"
-  cd /opt/php/sources
-  git clone https://github.com/php/php-src.git
+  if [ -d /opt/php/sources/php-src ]; then
+    cd /opt/php/sources/php-src
+    git pull
+    git fetch --tags
+    cd /opt/php/sources
+    rm -rf /opt/php/sources/7.0
+    rm -rf /opt/php/sources/7.1
+    rm -rf /opt/php/sources/7.2
+    rm -rf /opt/php/sources/7.3
+  fi
+  if [ ! -d /opt/php/sources/php-src ]; then
+    cd /opt/php/sources
+    git clone https://github.com/php/php-src.git
+  fi
+  cp /opt/php/sources/php-src /opt/php/sources/7.3 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.2 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
+  cd /opt/php/sources/7.3
+  git checkout tags/php-7.3.0alpha3
   cd /opt/php/sources/7.2
   git checkout tags/php-7.2.7
   cd /opt/php/sources/7.1
   git checkout tags/php-7.1.19
   cd /opt/php/sources/7.0
   git checkout tags/php-7.0.30
+  cd /opt/php/sources/7.3
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.3 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm
+  make -j4
+  make install
+  cp /opt/php/sources/7.3/php.ini-production /opt/php/7.3/lib/php.ini
+  cp /opt/php/7.3/etc/php-fpm.conf.default /opt/php/7.3/etc/php-fpm.conf
+  cp /opt/php/7.3/etc/php-fpm.d/www.conf.default /opt/php/7.3/etc/php-fpm.d/www.conf
+  echo "[Unit]
+Description=The PHP 7.3 FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/php/7.3/var/run/php-fpm.pid
+ExecStart=/opt/php/7.3/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.3/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.3-fpm.service
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.3\-fpm\.sock'/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-73\.pid'/g /opt/php/7.3/etc/php-fpm.conf
+  systemctl restart php-7.3-fpm.service
+  systemctl enable php-7.3-fpm.service
   cd /opt/php/sources/7.2
   ./buildconf --force
   ./configure --prefix=/opt/php/7.2 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm
@@ -227,7 +278,7 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.2-fpm.service
   sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
   sed -i s/127.0.0.1\:9000/'\/run\/php7\.2\-fpm\.sock'/g /opt/php/7.2/etc/php-fpm.d/www.conf
   sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-72\.pid'/g /opt/php/7.2/etc/php-fpm.conf
-  systemctl start php-7.2-fpm.service
+  systemctl restart php-7.2-fpm.service
   systemctl enable php-7.2-fpm.service
   cd /opt/php/sources/7.1
   ./buildconf --force
@@ -256,7 +307,7 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.1-fpm.service
   sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
   sed -i s/127.0.0.1\:9000/'\/run\/php7\.1\-fpm\.sock'/g /opt/php/7.1/etc/php-fpm.d/www.conf
   sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-71\.pid'/g /opt/php/7.1/etc/php-fpm.conf
-  systemctl start php-7.1-fpm.service
+  systemctl restart php-7.1-fpm.service
   systemctl enable php-7.1-fpm.service
   cd /opt/php/sources/7.0
   ./buildconf --force
@@ -285,7 +336,7 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.0-fpm.service
   sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
   sed -i s/127.0.0.1\:9000/'\/run\/php7\.0\-fpm\.sock'/g /opt/php/7.0/etc/php-fpm.d/www.conf
   sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-70\.pid'/g /opt/php/7.0/etc/php-fpm.conf
-  systemctl start php-7.0-fpm.service
+  systemctl restart php-7.0-fpm.service
   systemctl enable php-7.0-fpm.service
 }
 
@@ -361,13 +412,13 @@ function createwordpresssite {
           access_log /var/log/nginx/$site.access.log;
           error_log /var/log/nginx/$site.error.log;
           index index.php;
- 
+
           location / {
                   try_files \$uri \$uri/ /index.php\?\$args;
           }
- 
+
           include /etc/nginx/common/php7.2.conf;
- 
+
           location ~ /\.ht {
                   deny all;
           }
@@ -405,7 +456,7 @@ function deletesite {
     echo "Error please run --setup first"
     exit
   fi
-  rm -rf /etc/nginx/sites-available/$site 
+  rm -rf /etc/nginx/sites-available/$site
   rm -rf /etc/nginx/sites-enabled/$site
   systemctl restart php-7.2-fpm.service
   systemctl restart nginx
@@ -417,6 +468,14 @@ function deletesite {
   echo "site removed"
 }
 
+function updatePHP73 {
+    if [ ! -f /etc/nginx/sites-available/$site ]; then
+      echo "Site not found. Please first create the site with ./wscm -c $site"
+	  exit
+    fi
+    sed -i "/\/etc\/nginx\/common\//c\include /etc/nginx/common/php7.3.conf;" /etc/nginx/sites-available/$site
+    systemctl reload nginx
+}
 function updatePHP72 {
     if [ ! -f /etc/nginx/sites-available/$site ]; then
       echo "Site not found. Please first create the site with ./wscm -c $site"
@@ -459,12 +518,15 @@ while [ "$1" != "" ]; do
         -s  | --setup )           setup
                                   exit
                                   ;;
+        -u  | --update )          compilePHP
+                                  exit
+                                  ;;
         -c  | --create )          shift
                                   site=$1
                                   shift
                                   createsite
                                   ;;
-		-cw  | --create-wordpress ) shift
+		    -cw  | --create-wordpress ) shift
                                   site=$1
                                   shift
                                   adminemail=$1
@@ -485,6 +547,11 @@ while [ "$1" != "" ]; do
                                   site=$1
                                   shift
                                   updatePHP72
+                                  ;;
+        -php73  | --php73 )       shift
+                                  site=$1
+                                  shift
+                                  updatePHP73
                                   ;;
         -php71  | --php71 )       shift
                                   site=$1
