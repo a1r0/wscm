@@ -382,7 +382,6 @@ function createsite {
   }
   " >> /etc/nginx/sites-available/$site
   ln -s /etc/nginx/sites-available/$site /etc/nginx/sites-enabled/$site
-  systemctl restart php-7.2-fpm.service
   systemctl restart nginx
   dbname="$(< /dev/urandom tr -dc a-z | head -c${1:-15};echo;)"
   dbuser="$(< /dev/urandom tr -dc a-z | head -c${1:-15};echo;)"
@@ -433,7 +432,8 @@ function createwordpresssite {
                   deny all;
           }
   }
-  " >> /etc/nginx/sites-enabled/$site.conf
+  " >> /etc/nginx/sites-available/$site
+  ln -s /etc/nginx/sites-available/$site /etc/nginx/sites-enabled/$site
   systemctl restart nginx
   dbname="$(< /dev/urandom tr -dc a-z | head -c${1:-15};echo;)"
   dbuser="$(< /dev/urandom tr -dc a-z | head -c${1:-15};echo;)"
