@@ -230,7 +230,8 @@ function compilePHP {
   cp /opt/php/sources/7.3/php.ini-production /opt/php/7.3/lib/php.ini
   cp /opt/php/7.3/etc/php-fpm.conf.default /opt/php/7.3/etc/php-fpm.conf
   cp /opt/php/7.3/etc/php-fpm.d/www.conf.default /opt/php/7.3/etc/php-fpm.d/www.conf
-  echo "[Unit]
+  if [ ! -f /lib/systemd/system/php-7.3-fpm.service ]; then
+    echo "[Unit]
 Description=The PHP 7.3 FastCGI Process Manager
 After=network.target
 
@@ -242,6 +243,7 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.3-fpm.service
+  fi
   sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
   sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
   sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.3/etc/php-fpm.d/www.conf
@@ -259,7 +261,8 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.3-fpm.service
   cp /opt/php/sources/7.2/php.ini-production /opt/php/7.2/lib/php.ini
   cp /opt/php/7.2/etc/php-fpm.conf.default /opt/php/7.2/etc/php-fpm.conf
   cp /opt/php/7.2/etc/php-fpm.d/www.conf.default /opt/php/7.2/etc/php-fpm.d/www.conf
-  echo "[Unit]
+  if [ ! -f /lib/systemd/system/php-7.2-fpm.service ]; then
+    echo "[Unit]
 Description=The PHP 7.2 FastCGI Process Manager
 After=network.target
 
@@ -271,6 +274,7 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.2-fpm.service
+  fi
   sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
   sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
   sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.2/etc/php-fpm.d/www.conf
@@ -288,7 +292,9 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.2-fpm.service
   cp /opt/php/sources/7.1/php.ini-production /opt/php/7.1/lib/php.ini
   cp /opt/php/7.1/etc/php-fpm.conf.default /opt/php/7.1/etc/php-fpm.conf
   cp /opt/php/7.1/etc/php-fpm.d/www.conf.default /opt/php/7.1/etc/php-fpm.d/www.conf
-  echo "[Unit]
+  
+  if [ ! -f /lib/systemd/system/php-7.1-fpm.service ]; then
+    echo "[Unit]
 Description=The PHP 7.1 FastCGI Process Manager
 After=network.target
 
@@ -300,6 +306,7 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.1-fpm.service
+  fi
   sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
   sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
   sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.1/etc/php-fpm.d/www.conf
@@ -317,7 +324,9 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.1-fpm.service
   cp /opt/php/sources/7.0/php.ini-production /opt/php/7.0/lib/php.ini
   cp /opt/php/7.0/etc/php-fpm.conf.default /opt/php/7.0/etc/php-fpm.conf
   cp /opt/php/7.0/etc/php-fpm.d/www.conf.default /opt/php/7.0/etc/php-fpm.d/www.conf
-  echo "[Unit]
+  
+  if [ ! -f /lib/systemd/system/php-7.0-fpm.service ]; then
+    echo "[Unit]
 Description=The PHP 7.0 FastCGI Process Manager
 After=network.target
 
@@ -329,6 +338,7 @@ ExecReload=/bin/kill -USR2 $MAINPID
 
 [Install]
 WantedBy=multi-user.target" >> /lib/systemd/system/php-7.0-fpm.service
+  fi
   sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
   sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
   sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.0/etc/php-fpm.d/www.conf
