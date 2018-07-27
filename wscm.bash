@@ -75,7 +75,7 @@ function setupCentos {
   yum install nginx -y
   yum install zip -y
   yum groupinstall -y 'Development Tools'
-  yum install libcurl-devel libxslt-devel glibc-utils.x86_64 libxslt libtool-ltdl-devel aspell-devel freetype-devel libpng-devel libjpeg-devel openssl-devel bzip2-devel libxml2-devel -y
+  yum install libzip libcurl-devel libxslt-devel glibc-utils.x86_64 libxslt libtool-ltdl-devel aspell-devel freetype-devel libpng-devel libjpeg-devel openssl-devel bzip2-devel libxml2-devel -y
   compilePHP
   echo "Confiugring Nginx..."
   mkdir /etc/nginx/common
