@@ -215,11 +215,11 @@ function compilePHP {
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
   cd /opt/php/sources/7.3
-  git checkout tags/php-7.3.0alpha4
+  git checkout tags/php-7.3.0beta3
   cd /opt/php/sources/7.2
-  git checkout tags/php-7.2.8
+  git checkout tags/php-7.2.9
   cd /opt/php/sources/7.1
-  git checkout tags/php-7.1.20
+  git checkout tags/php-7.1.21
   cd /opt/php/sources/7.0
   git checkout tags/php-7.0.31
   cd /opt/php/sources/7.3
