@@ -217,13 +217,13 @@ function compilePHP {
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
   cd /opt/php/sources/7.3
-  git checkout tags/php-7.3.0beta3
+  git checkout tags/php-7.3.0RC4
   cd /opt/php/sources/7.2
-  git checkout tags/php-7.2.9
+  git checkout tags/php-7.2.11
   cd /opt/php/sources/7.1
-  git checkout tags/php-7.1.21
+  git checkout tags/php-7.1.23
   cd /opt/php/sources/7.0
-  git checkout tags/php-7.0.31
+  git checkout tags/php-7.0.32
   cd /opt/php/sources/7.3
   ./buildconf --force
   ./configure --prefix=/opt/php/7.3 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap
