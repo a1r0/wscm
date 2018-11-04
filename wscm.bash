@@ -143,6 +143,8 @@ function setupUbuntu {
   apt-get install libcurl4-openssl-dev pkg-config libssl-dev libxml2-dev libbz2-dev libjpeg-turbo8-dev libpng-dev libfreetype6-dev libxslt-dev build-essential autoconf libzip-dev bison zip -y
   apt-get install nginx -y > /dev/null
   sed -i s/user\ www\-data\;/user\ nginx\;/g /etc/nginx/nginx.conf
+  apt-get install -y libc-client-dev libkrb5-dev
+  ln -s /usr/lib/libc-client.a /usr/lib/x86_64-linux-gnu/libc-client.a
   compilePHP
   echo "Confiugring Nginx..."
   mkdir /etc/nginx/common
@@ -255,7 +257,7 @@ WantedBy=multi-user.target" >> /lib/systemd/system/php-7.3-fpm.service
   systemctl enable php-7.3-fpm.service
   cd /opt/php/sources/7.2
   ./buildconf --force
-  ./configure --prefix=/opt/php/7.2 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm
+  ./configure --prefix=/opt/php/7.2 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap
   make -j4
   make install
   cp /opt/php/sources/7.2/php.ini-production /opt/php/7.2/lib/php.ini
