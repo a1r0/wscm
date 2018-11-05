@@ -150,6 +150,13 @@ function setupUbuntu {
   mkdir /etc/nginx/common
   echo "
           location ~ \.php$ {
+              fastcgi_pass unix:/run/php7.3-fpm.sock;
+              include snippets/fastcgi-php.conf;
+              fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+          }
+  " >> /etc/nginx/common/php7.3.conf
+  echo "
+          location ~ \.php$ {
               fastcgi_pass unix:/run/php7.2-fpm.sock;
               include snippets/fastcgi-php.conf;
               fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
