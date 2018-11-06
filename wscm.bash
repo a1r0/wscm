@@ -192,6 +192,9 @@ function setupUbuntu {
   apt update -y
   curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
   apt update -y
+  export DEBIAN_FRONTEND=noninteractive
+  debconf-set-selections <<< 'mariadb-server-5.5 mysql-server/root_password password ' 
+  debconf-set-selections <<< 'mariadb-server-5.5 mysql-server/root_password_again password '
   apt install mariadb-server -y
   mysql_secure_installation <<EOF
 
