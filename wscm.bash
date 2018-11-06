@@ -190,6 +190,8 @@ function setupUbuntu {
   apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8 -y
   add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirror.sax.uk.as61049.net/mariadb/repo/10.3/ubuntu bionic main' -y
   apt update -y
+  curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+  apt update -y
   apt install mariadb-server -y
   mysql_secure_installation <<EOF
 
