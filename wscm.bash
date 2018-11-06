@@ -108,13 +108,14 @@ function setupCentos {
   sed -i s/'include\ \/etc\/nginx\/conf\.d\/\*\.conf\;'/'include\ \/etc\/nginx\/sites\-enabled\/\*\;'/g /etc/nginx/nginx.conf
   systemctl start nginx
   systemctl enable nginx
-  echo "# MariaDB 10.2 CentOS repository list - created 2018-04-07 14:49 UTC
+  echo "# MariaDB 10.3 CentOS repository list - created 2018-11-06 20:25 UTC
 # http://downloads.mariadb.org/mariadb/repositories/
 [mariadb]
 name = MariaDB
-baseurl = http://yum.mariadb.org/10.2/centos7-amd64
+baseurl = http://yum.mariadb.org/10.3/centos7-amd64
 gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 gpgcheck=1" >> /etc/yum.repos.d/MariaDB.repo
+  rpm --import https://yum.mariadb.org/RPM-GPG-KEY-MariaDB -y
   yum install MariaDB-server MariaDB-client -y
   systemctl start mariadb
   systemctl enable mariadb
@@ -187,7 +188,7 @@ function setupUbuntu {
   password="$(< /dev/urandom tr -dc a-z | head -c${1:-15};echo;)"
   echo "rootpass=$password" >> /etc/mysql-nginx.bash
   apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8 -y
-  add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://mirrors.coreix.net/mariadb/repo/10.2/ubuntu xenial main' -y
+  add-apt-repository 'deb [arch=amd64,arm64,ppc64el] http://mirror.sax.uk.as61049.net/mariadb/repo/10.3/ubuntu bionic main' -y
   apt update -y
   apt install mariadb-server -y
   mysql_secure_installation <<EOF
