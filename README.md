@@ -1,7 +1,7 @@
 # wscm
 Web Stack Config Manager
 
-This script will install Nginx as a package and compile PHP 7.0, 7.1, 7.2 from github tags. 
+This script will install Nginx as a package and compile PHP 7.0, 7.1, 7.2 and 7.3 from github tags. 
 
 This is a work in progress script and should not be used in production.
 ----
