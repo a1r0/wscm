@@ -58,12 +58,232 @@ function setup {
     echo "OS detected as CentOS."
 	setupCentos
   fi
+  if [ $os = "\"Arch.Linux\"" ]
+    then
+    echo "OS detected as Arch."
+  setupArch
+  fi
   ln -s /opt/php/7.2/bin/php /usr/bin/php
   wget -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && chmod +x /usr/local/bin/wp
   echo "Please register with Lets Encrypt for SSL..."
   certbot register
   echo "Finished, now you can create sites with --create domain.com"
   exit
+}
+
+function setupArch {
+  echo "Running pacman -Syu"
+  pacman -Syu
+  echo "Installing Packages... This may take a few minutes depending on your system."
+  pacman -Sy nginx autoconf bison openssl base-devel libzip c-client git freetype2 libjpeg-turbo libxslt wget
+  useradd nginx
+  sed -i s/#user\ html\;/user\ nginx\;/g /etc/nginx/nginx.conf
+  compilePHPArch
+  echo "Confiugring Nginx..."
+  mkdir /etc/nginx/common
+  echo "
+          location ~ \.php$ {
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php7.1-fpm.sock;
+        }
+  " >> /etc/nginx/common/php7.1.conf
+  echo "
+          location ~ \.php$ {
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php7.2-fpm.sock;
+        }
+  " >> /etc/nginx/common/php7.2.conf
+  echo "
+          location ~ \.php$ {
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php7.3-fpm.sock;
+        }
+  " >> /etc/nginx/common/php7.3.conf
+  echo "
+          location ~ \.php$ {
+                include fastcgi.conf;
+                fastcgi_pass unix:/run/php7.0-fpm.sock;
+        }
+  " >> /etc/nginx/common/php7.0.conf
+  mkdir /etc/nginx/sites-available/
+  mkdir /etc/nginx/sites-enabled/
+  sed -i s/'include\ \/etc\/nginx\/conf\.d\/\*\.conf\;'/'include\ \/etc\/nginx\/sites\-enabled\/\*\;'/g /etc/nginx/nginx.conf
+  systemctl start nginx
+  systemctl enable nginx
+  pacman -Sy certbot-nginx
+  pacman -Sy mariadb
+  mysql_install_db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+  systemctl start mariadb
+  systemctl enable mariadb
+  password="$(< /dev/urandom tr -dc a-z | head -c${1:-15};echo;)"
+  echo "rootpass=$password" >> /etc/mysql-nginx.bash
+  mysql_secure_installation <<EOF
+
+  y
+  $password
+  $password
+  y
+  y
+  y
+  y
+EOF
+  echo "...Complete"
+}
+
+function compilePHPArch {
+  echo "Downloading PHP sources, this may take a few minutes depending on your network connection"
+  if [ -d /opt/php/sources/php-src ]; then
+    cd /opt/php/sources/php-src
+    git pull
+    git fetch --tags
+    cd /opt/php/sources
+    rm -rf /opt/php/sources/7.0
+    rm -rf /opt/php/sources/7.1
+    rm -rf /opt/php/sources/7.2
+    rm -rf /opt/php/sources/7.3
+  fi
+  if [ ! -d /opt/php/sources/php-src ]; then
+    cd /opt/php/sources
+    git clone https://github.com/php/php-src.git
+  fi
+  cp /opt/php/sources/php-src /opt/php/sources/7.3 -R
+  cp /opt/php/sources/php-src /opt/php/sources/7.2 -R
+  cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
+  cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
+  cd /opt/php/sources/7.3
+  git checkout tags/php-7.3.4
+  cd /opt/php/sources/7.2
+  git checkout tags/php-7.2.17
+  cd /opt/php/sources/7.1
+  git checkout tags/php-7.1.28
+  cd /opt/php/sources/7.0
+  git checkout tags/php-7.0.32
+  cd /opt/php/sources/7.3
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.3 --with-zlib-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap --with-libdir=lib64
+  make -j4
+  make install
+  cp /opt/php/sources/7.3/php.ini-production /opt/php/7.3/lib/php.ini
+  cp /opt/php/7.3/etc/php-fpm.conf.default /opt/php/7.3/etc/php-fpm.conf
+  cp /opt/php/7.3/etc/php-fpm.d/www.conf.default /opt/php/7.3/etc/php-fpm.d/www.conf
+  if [ ! -f /lib/systemd/system/php-7.3-fpm.service ]; then
+    echo "[Unit]
+Description=The PHP 7.3 FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/php/7.3/var/run/php-fpm.pid
+ExecStart=/opt/php/7.3/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.3/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.3-fpm.service
+  fi
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.3\-fpm\.sock'/g /opt/php/7.3/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-73\.pid'/g /opt/php/7.3/etc/php-fpm.conf
+  systemctl restart php-7.3-fpm.service
+  systemctl enable php-7.3-fpm.service
+  cd /opt/php/sources/7.2
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.2 --with-zlib-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap --with-libdir=lib64
+  make -j4
+  make install
+  cp /opt/php/sources/7.2/php.ini-production /opt/php/7.2/lib/php.ini
+  cp /opt/php/7.2/etc/php-fpm.conf.default /opt/php/7.2/etc/php-fpm.conf
+  cp /opt/php/7.2/etc/php-fpm.d/www.conf.default /opt/php/7.2/etc/php-fpm.d/www.conf
+  if [ ! -f /lib/systemd/system/php-7.2-fpm.service ]; then
+    echo "[Unit]
+Description=The PHP 7.2 FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/php/7.2/var/run/php-fpm.pid
+ExecStart=/opt/php/7.2/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.2/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.2-fpm.service
+  fi
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.2\-fpm\.sock'/g /opt/php/7.2/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-72\.pid'/g /opt/php/7.2/etc/php-fpm.conf
+  systemctl restart php-7.2-fpm.service
+  systemctl enable php-7.2-fpm.service
+  cd /opt/php/sources/7.1
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.1 --with-zlib-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap --with-libdir=lib64
+  make -j4
+  make install
+  cp /opt/php/sources/7.1/php.ini-production /opt/php/7.1/lib/php.ini
+  cp /opt/php/7.1/etc/php-fpm.conf.default /opt/php/7.1/etc/php-fpm.conf
+  cp /opt/php/7.1/etc/php-fpm.d/www.conf.default /opt/php/7.1/etc/php-fpm.d/www.conf
+
+  if [ ! -f /lib/systemd/system/php-7.1-fpm.service ]; then
+    echo "[Unit]
+Description=The PHP 7.1 FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/php/7.1/var/run/php-fpm.pid
+ExecStart=/opt/php/7.1/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.1/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.1-fpm.service
+  fi
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.1\-fpm\.sock'/g /opt/php/7.1/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-71\.pid'/g /opt/php/7.1/etc/php-fpm.conf
+  systemctl restart php-7.1-fpm.service
+  systemctl enable php-7.1-fpm.service
+  cd /opt/php/sources/7.0
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.0 --with-zlib-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap --with-libdir=lib64
+  make -j4
+  make install
+  cp /opt/php/sources/7.0/php.ini-production /opt/php/7.0/lib/php.ini
+  cp /opt/php/7.0/etc/php-fpm.conf.default /opt/php/7.0/etc/php-fpm.conf
+  cp /opt/php/7.0/etc/php-fpm.d/www.conf.default /opt/php/7.0/etc/php-fpm.d/www.conf
+
+  if [ ! -f /lib/systemd/system/php-7.0-fpm.service ]; then
+    echo "[Unit]
+Description=The PHP 7.0 FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/php/7.0/var/run/php-fpm.pid
+ExecStart=/opt/php/7.0/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.0/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.0-fpm.service
+  fi
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.0\-fpm\.sock'/g /opt/php/7.0/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-70\.pid'/g /opt/php/7.0/etc/php-fpm.conf
+  systemctl restart php-7.0-fpm.service
+  systemctl enable php-7.0-fpm.service
 }
 
 function setupCentos {
