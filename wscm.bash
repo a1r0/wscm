@@ -13,7 +13,7 @@ function usage {
 -cw    |  --create-wordpress domain.com   Create a WordPress site
 -d     |  --delete domain.com             Delete a site and the associated database
 -b     |  --backup domain.com             Backup a site + MySQL database to /opt/backup
--php73 |  --php73  domain.com             Change site to PHP 7.3 (alpha!)
+-php73 |  --php73  domain.com             Change site to PHP 7.3
 -php72 |  --php72  domain.com             Change site to PHP 7.2
 -php71 |  --php71  domain.com             Change site to PHP 7.1
 -php70 |  --php70  domain.com             Change site to PHP 7.0
