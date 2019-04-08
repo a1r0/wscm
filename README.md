@@ -10,7 +10,9 @@ Supported OS's:
 
 -Fresh install of CentOS 7 (Tested with SELinux disabled and firewalld allowed ports 80 and 443)
 
--Fresh install Ubuntu 16.04
+-Fresh install of Ubuntu 18.04
+
+-Fresh install of Arch Linux
 
 Any other OS's will not work.
 
