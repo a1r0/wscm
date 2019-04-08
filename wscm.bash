@@ -75,7 +75,7 @@ function setupArch {
   echo "Running pacman -Syu"
   pacman -Syu
   echo "Installing Packages... This may take a few minutes depending on your system."
-  pacman -Sy nginx autoconf bison openssl base-devel libzip c-client git freetype2 libjpeg-turbo libxslt wget
+  pacman -Sy nginx autoconf bison openssl base-devel libzip c-client git freetype2 libjpeg-turbo libxslt wget zip
   useradd nginx
   sed -i s/#user\ html\;/user\ nginx\;/g /etc/nginx/nginx.conf
   compilePHPArch
