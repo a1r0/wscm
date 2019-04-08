@@ -107,7 +107,7 @@ function setupArch {
   " >> /etc/nginx/common/php7.0.conf
   mkdir /etc/nginx/sites-available/
   mkdir /etc/nginx/sites-enabled/
-  sed -i s/'include\ \/etc\/nginx\/conf\.d\/\*\.conf\;'/'include\ \/etc\/nginx\/sites\-enabled\/\*\;'/g /etc/nginx/nginx.conf
+  sed -i s/include\ \ \ \ \ \ \ mime\.types\;/'include\ \ \ \ \ \ \ mime\.types\;include\ \/etc\/nginx\/sites\-enabled\/\*;'/g /etc/nginx/nginx.conf
   systemctl start nginx
   systemctl enable nginx
   pacman -Sy certbot-nginx
