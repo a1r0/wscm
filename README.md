@@ -46,8 +46,6 @@ This will backup the database as well as the public_html root to /opt/backup
 Configuration locations:
 ---
 
-Nginx: /etc/nginx/nginx.conf
-
-PHP: /opt/php/VERSION/etc
-
-TODO: explain other uses and add more configuration locations^
+Main NGINX Config: /etc/nginx/nginx.conf
+NGINX Server Blocks: /etc/nginx/sites-enabled
+PHP: /opt/php/VERSION/lib/php.ini
