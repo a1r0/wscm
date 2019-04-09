@@ -47,5 +47,7 @@ Configuration locations:
 ---
 
 Main NGINX Config: /etc/nginx/nginx.conf
+
 NGINX Server Blocks: /etc/nginx/sites-enabled
+
 PHP: /opt/php/VERSION/lib/php.ini
