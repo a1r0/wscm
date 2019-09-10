@@ -101,6 +101,13 @@ function setupArch {
   " >> /etc/nginx/common/php7.3.conf
   echo "
           location ~ \.php$ {
+              fastcgi_pass unix:/run/php7.4-fpm.sock;
+              include snippets/fastcgi-php.conf;
+              fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+          }
+  " >> /etc/nginx/common/php7.4.conf
+  echo "
+          location ~ \.php$ {
                 include fastcgi.conf;
                 fastcgi_pass unix:/run/php7.0-fpm.sock;
         }
@@ -141,23 +148,54 @@ function compilePHPArch {
     rm -rf /opt/php/sources/7.1
     rm -rf /opt/php/sources/7.2
     rm -rf /opt/php/sources/7.3
+    rm -rf /opt/php/sources/7.4
   fi
   if [ ! -d /opt/php/sources/php-src ]; then
     cd /opt/php/sources
     git clone https://github.com/php/php-src.git
   fi
+  cp /opt/php/sources/php-src /opt/php/sources/7.4 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.3 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.2 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
+  cd /opt/php/sources/7.4
+  git checkout tags/php-7.4.0RC1
   cd /opt/php/sources/7.3
-  git checkout tags/php-7.3.9RC1
+  git checkout tags/php-7.3.9
   cd /opt/php/sources/7.2
-  git checkout tags/php-7.2.22RC1
+  git checkout tags/php-7.2.23RC1
   cd /opt/php/sources/7.1
-  git checkout tags/php-7.1.31
+  git checkout tags/php-7.1.32
   cd /opt/php/sources/7.0
-  git checkout tags/php-7.0.32
+  git checkout tags/php-7.0.33
+  cd /opt/php/sources/7.4
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.4 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm
+  make -j4
+  make install
+  cp /opt/php/sources/7.4/php.ini-production /opt/php/7.4/lib/php.ini
+  cp /opt/php/7.4/etc/php-fpm.conf.default /opt/php/7.4/etc/php-fpm.conf
+  cp /opt/php/7.4/etc/php-fpm.d/www.conf.default /opt/php/7.4/etc/php-fpm.d/www.conf
+  echo "[Unit]
+Description=The PHP 7.4 FastCGI Process Manager
+After=network.target
+[Service]
+Type=simple
+PIDFile=/opt/php/7.4/var/run/php-fpm.pid
+ExecStart=/opt/php/7.4/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.4/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.4-fpm.service
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.3\-fpm\.sock'/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-74\.pid'/g /opt/php/7.4/etc/php-fpm.conf
+  systemctl restart php-7.4-fpm.service
+  systemctl enable php-7.4-fpm.service
   cd /opt/php/sources/7.3
   ./buildconf --force
   ./configure --prefix=/opt/php/7.3 --with-zlib-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap --with-libdir=lib64
@@ -371,6 +409,13 @@ function setupUbuntu {
   mkdir /etc/nginx/common
   echo "
           location ~ \.php$ {
+              fastcgi_pass unix:/run/php7.4-fpm.sock;
+              include snippets/fastcgi-php.conf;
+              fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+          }
+  " >> /etc/nginx/common/php7.4.conf
+  echo "
+          location ~ \.php$ {
               fastcgi_pass unix:/run/php7.3-fpm.sock;
               include snippets/fastcgi-php.conf;
               fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
@@ -440,23 +485,58 @@ function compilePHP {
     rm -rf /opt/php/sources/7.1
     rm -rf /opt/php/sources/7.2
     rm -rf /opt/php/sources/7.3
+    rm -rf /opt/php/sources/7.4
   fi
   if [ ! -d /opt/php/sources/php-src ]; then
     cd /opt/php/sources
     git clone https://github.com/php/php-src.git
   fi
+  cp /opt/php/sources/php-src /opt/php/sources/7.4 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.3 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.2 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
+  cd /opt/php/sources/7.4
+  git checkout tags/php-7.4.0RC1
   cd /opt/php/sources/7.3
-  git checkout tags/php-7.3.9RC1
+  git checkout tags/php-7.3.9
   cd /opt/php/sources/7.2
-  git checkout tags/php-7.2.22RC1
+  git checkout tags/php-7.2.23RC1
   cd /opt/php/sources/7.1
-  git checkout tags/php-7.1.31
+  git checkout tags/php-7.1.32
   cd /opt/php/sources/7.0
-  git checkout tags/php-7.0.32
+  git checkout tags/php-7.0.33
+  cd /opt/php/sources/7.4
+  ./buildconf --force
+  ./configure --prefix=/opt/php/7.4 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap
+  make -j4
+  make install
+  cp /opt/php/sources/7.4/php.ini-production /opt/php/7.4/lib/php.ini
+  cp /opt/php/7.4/etc/php-fpm.conf.default /opt/php/7.4/etc/php-fpm.conf
+  cp /opt/php/7.4/etc/php-fpm.d/www.conf.default /opt/php/7.4/etc/php-fpm.d/www.conf
+  if [ ! -f /lib/systemd/system/php-7.4-fpm.service ]; then
+    echo "[Unit]
+Description=The PHP 7.4 FastCGI Process Manager
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/opt/php/7.4/var/run/php-fpm.pid
+ExecStart=/opt/php/7.4/sbin/php-fpm --nodaemonize --fpm-config /opt/php/7.4/etc/php-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target" >> /lib/systemd/system/php-7.4-fpm.service
+  fi
+  sed -i s/\;listen.owner\ \=\ www\-data/listen.owner\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.group\ \=\ www\-data/listen.group\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/\;listen.mode\ \=\ 0660/listen.mode\ \=\ 0660/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/user\ \=\ www\-data/user\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/group\ \=\ www\-data/group\ \=\ nginx/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/127.0.0.1\:9000/'\/run\/php7\.4\-fpm\.sock'/g /opt/php/7.4/etc/php-fpm.d/www.conf
+  sed -i s/'\;pid\ \=\ run\/php\-fpm\.pid'/'pid\ \=\ run\/php\-fpm\-74\.pid'/g /opt/php/7.4/etc/php-fpm.conf
+  systemctl restart php-7.4-fpm.service
+  systemctl enable php-7.4-fpm.service
   cd /opt/php/sources/7.3
   ./buildconf --force
   ./configure --prefix=/opt/php/7.3 --with-zlib-dir --with-freetype-dir --enable-mbstring --with-libxml-dir=/usr --enable-soap --enable-calendar --with-curl --with-zlib --with-gd --disable-rpath --enable-inline-optimization --with-bz2 --with-zlib --enable-sockets --enable-sysvsem --enable-sysvshm --enable-pcntl --enable-mbregex --enable-exif --enable-bcmath --with-mhash --enable-zip --with-pcre-regex --with-mysqli --with-pdo-mysql --with-mysqli --with-jpeg-dir=/usr --with-png-dir=/usr --with-openssl --with-fpm-user=www-data --with-fpm-group=www-data --with-libdir=/lib/x86_64-linux-gnu --enable-ftp --with-kerberos --with-gettext --with-xmlrpc --with-xsl --enable-opcache --enable-fpm --with-imap-ssl --with-imap
@@ -713,6 +793,14 @@ function deletesite {
   echo "site removed"
 }
 
+function updatePHP74 {
+    if [ ! -f /etc/nginx/sites-available/$site ]; then
+      echo "Site not found. Please first create the site with ./wscm -c $site"
+	  exit
+    fi
+    sed -i "/\/etc\/nginx\/common\//c\include /etc/nginx/common/php7.4.conf;" /etc/nginx/sites-available/$site
+    systemctl reload nginx
+}
 function updatePHP73 {
     if [ ! -f /etc/nginx/sites-available/$site ]; then
       echo "Site not found. Please first create the site with ./wscm -c $site"
@@ -771,7 +859,7 @@ while [ "$1" != "" ]; do
                                   shift
                                   createsite
                                   ;;
-		    -cw  | --create-wordpress ) shift
+		-cw  | --create-wordpress ) shift
                                   site=$1
                                   shift
                                   adminemail=$1
@@ -787,6 +875,11 @@ while [ "$1" != "" ]; do
                                   site=$1
                                   shift
                                   backup
+                                  ;;
+        -php74  | --php74 )       shift
+                                  site=$1
+                                  shift
+                                  updatePHP74
                                   ;;
         -php72  | --php72 )       shift
                                   site=$1
@@ -813,3 +906,4 @@ while [ "$1" != "" ]; do
     esac
     shift
 done
+
