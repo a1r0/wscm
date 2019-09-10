@@ -738,7 +738,7 @@ function createwordpresssite {
           index index.php;
 
           location / {
-                  try_files \$uri \$uri/ /index.php\?\$args;
+                  try_files \$uri \$uri/ /index.php?\$args;
           }
 
           include /etc/nginx/common/php7.2.conf;
