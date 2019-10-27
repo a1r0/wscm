@@ -160,13 +160,13 @@ function compilePHPArch {
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
   cd /opt/php/sources/7.4
-  git checkout tags/php-7.4.0RC1
+  git checkout tags/php-7.4.0RC4
   cd /opt/php/sources/7.3
-  git checkout tags/php-7.3.9
+  git checkout tags/php-7.3.11
   cd /opt/php/sources/7.2
-  git checkout tags/php-7.2.23RC1
+  git checkout tags/php-7.2.24
   cd /opt/php/sources/7.1
-  git checkout tags/php-7.1.32
+  git checkout tags/php-7.1.33
   cd /opt/php/sources/7.0
   git checkout tags/php-7.0.33
   cd /opt/php/sources/7.4
@@ -497,13 +497,13 @@ function compilePHP {
   cp /opt/php/sources/php-src /opt/php/sources/7.1 -R
   cp /opt/php/sources/php-src /opt/php/sources/7.0 -R
   cd /opt/php/sources/7.4
-  git checkout tags/php-7.4.0RC1
+  git checkout tags/php-7.4.0RC4
   cd /opt/php/sources/7.3
-  git checkout tags/php-7.3.9
+  git checkout tags/php-7.3.11
   cd /opt/php/sources/7.2
-  git checkout tags/php-7.2.23RC1
+  git checkout tags/php-7.2.24
   cd /opt/php/sources/7.1
-  git checkout tags/php-7.1.32
+  git checkout tags/php-7.1.33
   cd /opt/php/sources/7.0
   git checkout tags/php-7.0.33
   cd /opt/php/sources/7.4
